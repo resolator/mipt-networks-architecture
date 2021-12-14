@@ -17,8 +17,6 @@ def get_args():
                         help='Telegram bot token.')
     parser.add_argument('--ngrok-path', type=Path, required=True,
                         help='Path to ngrok file.')
-    parser.add_argument('--ngrok-token', required=True,
-                        help='Ngrok token.')
     parser.add_argument('--ws-path', type=Path, required=True,
                         help='Path to the web stream script.')
     parser.add_argument('--rs-path', type=Path,
@@ -41,7 +39,6 @@ def get_args():
 class Communicator:
     def __init__(self,
                  ngrok_path,
-                 ngrok_token,
                  ws_path,
                  rs_path,
                  rs_token,
@@ -52,7 +49,6 @@ class Communicator:
         self._log_path = log_path
         self._ws_path = ws_path
 
-        self._ngrok_token = ngrok_token
         self._ngrok_path = ngrok_path
                       
         self._rs_path = rs_path
@@ -233,7 +229,6 @@ def main():
     updater = Updater(token=args.bot_token)
 
     comm = Communicator(args.ngrok_path,
-                        args.ngrok_token,
                         args.ws_path,
                         args.rs_path,
                         args.rs_token,
