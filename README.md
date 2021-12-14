@@ -18,12 +18,13 @@ This application consist of the following components:
 
 ## Installation
 
-1. Install the surveillance system (with a telegram part) from [this](https://github.com/resolator/rpi-surveillance) repo.
-2. Download ngrok from their [webiste](https://ngrok.com) and get a token for your ngrok instance.
+1. Install the surveillance system (with a telegram part) from [this repo](https://github.com/resolator/rpi-surveillance).
+2. Download ngrok from the [official webiste](https://ngrok.com) and get a token for your ngrok instance.
 3. Create a `~/bin/ngrok` directory and place downloaded ngrok there.
-4. Move the `ngrok auth file` to `.ngrok2` directory. Insert your ngrok auth key to this file.
-5. Move `tg_bot.service` to `/etc/systemd/system/`.
-6. Execute `sudo systemctl enable tg_bot` and `sudo systemctl start tg_bot`.
+4. Move the `ngrok.yml` to `~/.ngrok2` directory. Replace `<insert_your_token_here>` string with your ngrok token. You can also change the region.
+5. Generate `tg_bot.service` file using `generate_service.py` script.
+5. Move generated `tg_bot.service` to `/etc/systemd/system/`.
+6. Execute `sudo systemctl enable tg_bot.service` and `sudo systemctl start tg_bot.service`.
 7. Done. Now you can use the app.
 
 ## Usage
