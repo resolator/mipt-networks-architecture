@@ -1,0 +1,9 @@
+authtoken: <insert_your_token_here>
+region: eu
+tunnels:
+  first:
+    addr: 22
+    proto: tcp
+  second:
+    addr: 8080
+    proto: http
