@@ -44,8 +44,8 @@ def main():
             f' --ngrok-path {home_dir}/bin/ngrok/ngrok --ws-path {repo_dir}/web'
             f'_stream.py --rs-path {rs_path} --rs-token {rs_token} --rs-channel'
             f'-id {rs_channel_id} --log-path {home_dir}/bin/ngrok/log.txt\n\n'
-            '[Install]'
-            'WantedBy=multi-user.target')
+            '[Install]\n'
+            'WantedBy=multi-user.target\n')
     
     tg_service_path = repo_dir.joinpath('tg_bot.service')
     with open(tg_service_path, 'w') as f:
