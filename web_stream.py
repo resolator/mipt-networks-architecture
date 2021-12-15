@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*
 """Raspberry Pi web streaming server."""
 import io
+import time
 import logging
 import argparse
 import socketserver
@@ -9,6 +10,8 @@ import socketserver
 from http import server
 from picamera import PiCamera
 from threading import Condition
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 
 
 def get_args():
@@ -57,9 +60,9 @@ class StreamingOutput():
             with self.condition:
                 self.frame = self.buffer.getvalue()
                 self.condition.notify_all()
-            
+
             self.buffer.seek(0)
-        
+
         return self.buffer.write(buf)
 
 
@@ -86,7 +89,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Type',
                              'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
-            
+
             try:
                 while True:
                     with self.output.condition:
@@ -114,12 +117,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     def __init__(self, address, handler, output, width=640, height=480):
         super().__init__(address, handler)
-        
+
         self.allow_reuse_address = True
         self.daemon_threads = True
 
         handler.output = output
-        handler.page=f"""\
+        handler.page = f"""\
             <html>
             <head>
             <title>rpi MJPEG stream</title>
@@ -134,10 +137,29 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
             """
 
 
+def capture_frame(resolution):
+    """Capture a single frame from the Pi camera."""
+
+    # setup camera
+    camera = PiCamera(resolution=resolution)
+    camera.start_preview()
+    time.sleep(2)
+
+    stream = io.BytesIO()
+
+    try:
+        camera.capture(stream, 'jpeg')
+        stream.seek(0)
+    finally:
+        camera.close()
+
+    return stream.read()
+
+
 def main():
     """Application entry point."""
     args = get_args()
-    
+
     # setup camera
     camera = PiCamera(resolution=args.resolution, framerate=args.fps)
     camera.rotation = args.rotation
