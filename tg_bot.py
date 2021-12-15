@@ -8,6 +8,7 @@ import subprocess
 
 from pathlib import Path
 from telegram.ext import Updater, CommandHandler
+import telegram.ext
 
 
 def get_args():
@@ -32,6 +33,8 @@ def get_args():
                              'with your token for rpi-surveillance.')
     parser.add_argument('--log-path', type=Path, required=True,
                         help='Path to log file of ngrok.')
+    parser.add_argument('--owner-id', type=int, default=335805223,
+                        help='The user_id of the owner of this bot.')
 
     return parser.parse_args()
 
@@ -233,7 +236,8 @@ def main():
                         args.rs_path,
                         args.rs_token,
                         args.rs_channel_id,
-                        args.log_path)
+                        args.log_path,
+                        args.owner_id)
     handlers = []
     
     handlers.append(CommandHandler('help', comm.help_cmd))
@@ -245,6 +249,10 @@ def main():
     handlers.append(CommandHandler('reboot', comm.reboot_cmd))    
     
     [updater.dispatcher.add_handler(x) for x in handlers]
+
+    # notify that bot is up
+    updater.bot.send_message(chat_id=args.owner_id,
+                             text='The bot has been started.')
 
     while True:
         try:
