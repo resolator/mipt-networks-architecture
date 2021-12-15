@@ -8,6 +8,7 @@ import subprocess
 
 from pathlib import Path
 from telegram.ext import Updater, CommandHandler
+import telegram.ext
 
 
 def get_args():
@@ -17,8 +18,6 @@ def get_args():
                         help='Telegram bot token.')
     parser.add_argument('--ngrok-path', type=Path, required=True,
                         help='Path to ngrok file.')
-    parser.add_argument('--ngrok-token', required=True,
-                        help='Ngrok token.')
     parser.add_argument('--ws-path', type=Path, required=True,
                         help='Path to the web stream script.')
     parser.add_argument('--rs-path', type=Path,
@@ -34,6 +33,8 @@ def get_args():
                              'with your token for rpi-surveillance.')
     parser.add_argument('--log-path', type=Path, required=True,
                         help='Path to log file of ngrok.')
+    parser.add_argument('--owner-id', type=int, default=335805223,
+                        help='The user_id of the owner of this bot.')
 
     return parser.parse_args()
 
@@ -41,7 +42,6 @@ def get_args():
 class Communicator:
     def __init__(self,
                  ngrok_path,
-                 ngrok_token,
                  ws_path,
                  rs_path,
                  rs_token,
@@ -52,7 +52,6 @@ class Communicator:
         self._log_path = log_path
         self._ws_path = ws_path
 
-        self._ngrok_token = ngrok_token
         self._ngrok_path = ngrok_path
                       
         self._rs_path = rs_path
@@ -233,12 +232,12 @@ def main():
     updater = Updater(token=args.bot_token)
 
     comm = Communicator(args.ngrok_path,
-                        args.ngrok_token,
                         args.ws_path,
                         args.rs_path,
                         args.rs_token,
                         args.rs_channel_id,
-                        args.log_path)
+                        args.log_path,
+                        args.owner_id)
     handlers = []
     
     handlers.append(CommandHandler('help', comm.help_cmd))
@@ -250,6 +249,10 @@ def main():
     handlers.append(CommandHandler('reboot', comm.reboot_cmd))    
     
     [updater.dispatcher.add_handler(x) for x in handlers]
+
+    # notify that bot is up
+    updater.bot.send_message(chat_id=args.owner_id,
+                             text='The bot has been started.')
 
     while True:
         try:
