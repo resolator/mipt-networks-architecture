@@ -8,7 +8,7 @@ import subprocess
 
 from pathlib import Path
 from telegram.ext import Updater, CommandHandler
-import telegram.ext
+from web_stream import capture_frame
 
 
 def get_args():
@@ -53,7 +53,7 @@ class Communicator:
         self._ws_path = ws_path
 
         self._ngrok_path = ngrok_path
-                      
+
         self._rs_path = rs_path
         self._rs_channel_id = rs_channel_id
         self._rs_token = rs_token
@@ -64,7 +64,7 @@ class Communicator:
             chat_id=update.effective_chat.id,
             text='Sorry, you don\'t have access to this bot.'
         )
-    
+
     def app_manager(self,
                     update,
                     context,
@@ -95,7 +95,7 @@ class Communicator:
                 text=wrong_arg_msg
             )
             return
-        
+
         # process cmd
         if cmd == 'start':
             if getattr(self, p_attr_name, None) is None:
@@ -107,31 +107,31 @@ class Communicator:
                 p = subprocess.Popen(launch_cmd, stdout=subprocess.DEVNULL)
                 time.sleep(4)
                 if p.poll() is not None:
-                    msg = f'{app_name} launching failed. Most probably you '\
+                    msg = f'{app_name} launching failed. Most probably you ' \
                           f'trying to start "ws" and "rs" at the same time.'
                     p.terminate()
                     p.wait()
                 else:
                     setattr(self, p_attr_name, p)
-                    msg=f'{app_name} has been launched.'
+                    msg = f'{app_name} has been launched.'
             else:
-                msg=f'{app_name} already launched.'
+                msg = f'{app_name} already launched.'
         elif cmd == 'stop':
             if getattr(self, p_attr_name, None) is None:
-                msg=f'{app_name} is not running.'
+                msg = f'{app_name} is not running.'
             else:
                 # stop app
                 getattr(self, p_attr_name).terminate()
                 getattr(self, p_attr_name).wait()
                 setattr(self, p_attr_name, None)
-                
+
                 msg = f'{app_name} stopped successfully.'
         else:  # status
             if getattr(self, p_attr_name, None) is None:
                 msg = f'{app_name} is not running.'
             else:
                 msg = f'{app_name} is running.'
-        
+
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=msg)
 
@@ -149,7 +149,7 @@ class Communicator:
         if update.effective_user.id != self._user_id:
             Communicator.send_no_access_msg(context, update)
             return
-    
+
         try:
             n_lines = abs(int(context.args[0]))
         except ValueError:
@@ -161,7 +161,7 @@ class Communicator:
             return
         except IndexError:
             n_lines = 9  # setup default number of lines
-        
+
         with open(self._log_path, 'r') as f:
             logs = f.readlines()
         logs = ''.join(logs[-n_lines:])
@@ -193,6 +193,28 @@ class Communicator:
                           '--channel-id', self._rs_channel_id, '--rotation',
                           '180'])
 
+    def capture_frame_cmd(self, update, context):
+        if update.effective_user.id != self._user_id:
+            Communicator.send_no_access_msg(context, update)
+            return
+
+        resolutions = ['640x480', '1280x720', '1920x1080']
+        try:
+            resolution = context.args[0]
+
+            if resolution not in resolutions:
+                context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text='Choice one of the following resolutions: ' + ', '.join(resolutions)
+                )
+                return
+
+        except IndexError:
+            resolution = '640x480'  # setup default resolution
+
+        context.bot.send_photo(chat_id=update.effective_chat.id,
+                               photo=capture_frame(resolution))
+
     def reboot_cmd(self, update, context):
         if update.effective_user.id != self._user_id:
             Communicator.send_no_access_msg(context, update)
@@ -208,16 +230,17 @@ class Communicator:
         if update.effective_user.id != self._user_id:
             Communicator.send_no_access_msg(context, update)
             return
-    
-        text = 'Available commands:\n'\
-                '/help - show this message\n'\
-                '/start - check the access\n'\
-                '/get_log [N] - get ngrok logs (last N lines)\n'\
-                '/ngrok - ngrok commands (start, stop, status)\n'\
-                '/ws - web stream commands (start, stop, status)\n'\
-                '/rs - rpi-surveillance commands (start, stop, status)\n'\
-                '/reboot - reboot the host\n'
-        
+
+        text = 'Available commands:\n' \
+               '/help - show this message\n' \
+               '/start - check the access\n' \
+               '/get_log [N] - get ngrok logs (last N lines)\n' \
+               '/ngrok - ngrok commands (start, stop, status)\n' \
+               '/ws - web stream commands (start, stop, status)\n' \
+               '/rs - rpi-surveillance commands (start, stop, status)\n' \
+               '/capture_frame - capture a single frame (you can select a resolution)\n' \
+               '/reboot - reboot the host\n'
+
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text
@@ -239,15 +262,16 @@ def main():
                         args.log_path,
                         args.owner_id)
     handlers = []
-    
+
     handlers.append(CommandHandler('help', comm.help_cmd))
     handlers.append(CommandHandler('start', comm.start_cmd))
-    handlers.append(CommandHandler('get_log', comm.get_log_cmd))   
+    handlers.append(CommandHandler('get_log', comm.get_log_cmd))
     handlers.append(CommandHandler('ngrok', comm.ngrok_cmd))
     handlers.append(CommandHandler('ws', comm.ws_cmd))
     handlers.append(CommandHandler('rs', comm.rs_cmd))
-    handlers.append(CommandHandler('reboot', comm.reboot_cmd))    
-    
+    handlers.append(CommandHandler('capture_frame', comm.capture_frame_cmd))
+    handlers.append(CommandHandler('reboot', comm.reboot_cmd))
+
     [updater.dispatcher.add_handler(x) for x in handlers]
 
     # notify that bot is up
