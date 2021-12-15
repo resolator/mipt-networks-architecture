@@ -16,6 +16,8 @@ def main():
     rs_token = input()
     print('Enter rpi-surveillance channel id: ', end='')
     rs_channel_id = input()
+    print('Enter the ID of a owner user: ', end='')
+    owner_id = input()
     print('Generating...')
 
     # obtain home path
@@ -43,7 +45,8 @@ def main():
             f'ExecStart=python3 {repo_dir}/tg_bot.py --bot-token {tg_bot_token}'
             f' --ngrok-path {home_dir}/bin/ngrok/ngrok --ws-path {repo_dir}/web'
             f'_stream.py --rs-path {rs_path} --rs-token {rs_token} --rs-channel'
-            f'-id {rs_channel_id} --log-path {home_dir}/bin/ngrok/log.txt\n\n'
+            f'-id {rs_channel_id} --log-path {home_dir}/bin/ngrok/log.txt --own'
+            f'er-id {owner_id}\n\n'
             '[Install]\n'
             'WantedBy=multi-user.target\n')
     
