@@ -1,3 +1,4 @@
+version: "2"
 authtoken: <insert_your_token_here>
 region: eu
 tunnels:

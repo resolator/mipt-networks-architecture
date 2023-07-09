@@ -28,6 +28,10 @@ def main():
     repo_dir = Path(sys.argv[0]).absolute().parent
     print('Detected repo path:', repo_dir)
 
+    # obtain username
+    username = os.environ['USER']
+    print('Detected username:', username)
+
     # obtain rpi-surveillance path
     p = subprocess.Popen(['which', 'rpi-surveillance'], stdout=subprocess.PIPE)
     out, _ = p.communicate()
@@ -38,10 +42,12 @@ def main():
     # generate service file
     data = ('[Unit]\n'
             'Description=Telegram bot to manage this host.\n'
-            'After=network.target\n\n'
+            'After=network-online.target\n'
+            'Wants=network-online.target\n\n'
             '[Service]\n'
             'Type=simple\n'
             'Restart=always\n'
+            f'User={username}\n'
             f'ExecStart=python3 {repo_dir}/tg_bot.py --bot-token {tg_bot_token}'
             f' --ngrok-path {home_dir}/bin/ngrok/ngrok --ws-path {repo_dir}/web'
             f'_stream.py --rs-path {rs_path} --rs-token {rs_token} --rs-channel'
@@ -49,11 +55,11 @@ def main():
             f'er-id {owner_id}\n\n'
             '[Install]\n'
             'WantedBy=multi-user.target\n')
-    
+
     tg_service_path = repo_dir.joinpath('tg_bot.service')
     with open(tg_service_path, 'w') as f:
         print(data, file=f)
-    
+
     print('File successfully created at path:', tg_service_path)
 
 
